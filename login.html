@@ -1,0 +1,55 @@
+<style>
+  /* Inside <style> tag */
+  #auto-period {
+    color: #ffb703;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.5em;
+    text-shadow: 0 0 5px #ffb703, 0 0 10px #fb8500;
+  }
+
+  #result {
+    color: #06d6a0;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.5em;
+    text-shadow: 0 0 5px #06d6a0, 0 0 10px #118ab2;
+  }
+
+  .history-entry span {
+    font-family: 'Orbitron', sans-serif;
+    color: #ffd166;
+    text-shadow: 0 0 2px #ff6f61;
+  }
+</style>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    let lastPeriod = '';
+    const historyDiv = document.getElementById('history');
+
+    document.querySelector('.predict-button').addEventListener('click', function () {
+      const now = new Date();
+      const totalMinutes = now.getHours() * 60 + now.getMinutes() + 1;
+      const formattedMinutes = String(totalMinutes).padStart(4, '0');
+      const currentDate = now.toISOString().split('T')[0].replace(/-/g, '');
+      const autoPeriod = currentDate + '01' + formattedMinutes;
+
+      if (autoPeriod === lastPeriod) {
+        alert('Wait for next period');
+        return;
+      }
+
+      lastPeriod = autoPeriod;
+      const result = Math.random() < 0.9 ? 'SMALL' : 'BIG';
+
+      document.getElementById('auto-period').innerHTML = `<strong>API:</strong> <span style="color:#ffb703">${autoPeriod}</span>`;
+      document.getElementById('result').innerHTML = `<strong>RESULT:</strong> <span style="color:#06d6a0">${result}</span>`;
+
+      // Add to history
+      const entry = document.createElement('div');
+      entry.className = 'history-entry';
+      entry.innerHTML = `<span><strong>Period:</strong> ${autoPeriod}</span> <span><strong>Prediction:</strong> ${result}</span>`;
+      historyDiv.prepend(entry);
+    });
+  });
+          </script>
+          
