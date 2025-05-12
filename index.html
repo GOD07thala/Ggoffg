@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>God x Modes - Naruto Theme</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      font-weight: bold;
+      background: linear-gradient(135deg, #fbbf24, #f472b6, #60a5fa);
+      animation: gradientBG 10s ease infinite;
+      background-size: 400% 400%;
+    }
+
+    @keyframes gradientBG {
+      0% {background-position: 0% 50%;}
+      50% {background-position: 100% 50%;}
+      100% {background-position: 0% 50%;}
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .naruto-spin {
+      animation: spin 10s linear infinite;
+    }
+  </style>
+</head>
+<body class="font-sans min-h-screen p-6 text-white">
+
+  <!-- Naruto Animation Header -->
+  <div class="flex justify-center mb-6">
+    <img src="https://i.ibb.co/jg9H9dz/naruto-running.gif" alt="Naruto" class="w-32 h-32 naruto-spin">
+  </div>
+
+  <div class="max-w-3xl mx-auto space-y-6">
+
+    <!-- Period Info & Timer -->
+    <div class="bg-black bg-opacity-70 rounded-xl shadow-lg p-6">
+      <h2 class="text-xl mb-4 text-yellow-300">🔥 Current Wingo Period</h2>
+      <div class="flex justify-between items-center">
+        <span class="text-lg text-pink-200">
+          Period ID: <span id="period-id">--</span>
+        </span>
+        <span class="text-lg text-red-400">
+          Timer: <span id="timer">60</span>s
+        </span>
+      </div>
+      <div class="text-center mt-4">
+        <div class="text-lg mb-2 text-purple-300">Your Prediction:</div>
+        <div class="flex justify-center space-x-4">
+          <button id="predict-big" class="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">
+            Big
+          </button>
+          <button id="predict-small" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+            Small
+          </button>
+        </div>
+        <div class="mt-4">
+          <span class="text-2xl text-green-300" id="prediction-result">Waiting...</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Result History -->
+    <div class="bg-black bg-opacity-70 rounded-xl shadow-lg p-6">
+      <h2 class="text-xl mb-4 text-yellow-300">📜 Result History</h2>
+      <ul id="result-history" class="space-y-2 text-white">
+        <!-- Results will be injected here -->
+      </ul>
+    </div>
+
+  </div>
+
+  <script>
+    let period = 99999;
+    let countdown = 60;
+    let userPrediction = null;
+
+    const timerEl = document.getElementById("timer");
+    const periodEl = document.getElementById("period-id");
+    const predictionEl = document.getElementById("prediction-result");
+    const historyEl = document.getElementById("result-history");
+    const predictBigBtn = document.getElementById("predict-big");
+    const predictSmallBtn = document.getElementById("predict-small");
+
+    const fetch91ClubResult = async () => {
+      try {
+        const res = await fetch('https://91appl.com/api/wingo/latest');
+        const data = await res.json();
+        if (data && data.result) {
+          return data.result;
+        } else {
+          return Math.random() > 0.5 ? "Big" : "Small"; // Fallback
+        }
+      } catch (e) {
+        console.error("Failed to fetch real Wingo result:", e);
+        return Math.random() > 0.5 ? "Big" : "Small"; // Fallback
+      }
+    };
+
+    const fetchWingoPeriod = async () => {
+      try {
+        const res = await fetch('https://91appl.com/api/wingo/latest');
+        const data = await res.json();
+        if (data && data.period) {
+          period = data.period;
+          periodEl.textContent = period;
+        }
+      } catch (e) {
+        console.error("Failed to fetch real Wingo period:", e);
+        period++;
+        periodEl.textContent = period;
+      }
+    };
+
+    const updateTimer = async () => {
+      timerEl.textContent = countdown;
+      countdown--;
+
+      if (countdown === 60) {
+        await fetchWingoPeriod();
+        predictionEl.textContent = "Waiting for your prediction...";
+        userPrediction = null;
+      }
+
+      if (countdown === 0) {
+        const actualResult = await fetch91ClubResult();
+        let outcome = "No Prediction";
+        let outcomeClass = "text-gray-400";
+
+        if (userPrediction) {
+          const isWin = actualResult.toLowerCase() === userPrediction.toLowerCase();
+          outcome = isWin ? "Win" : "Loss";
+          outcomeClass = isWin ? "text-green-400" : "text-red-500";
+        }
+
+        const item = document.createElement("li");
+        item.className = "flex justify-between items-center border-b border-white pb-2";
+        item.innerHTML = `
+          <span>Period #${period}</span>
+          <span class="text-sm">${userPrediction || "No Prediction"} → ${actualResult}</span>
+          <span class="font-bold ${outcomeClass}">
+            ${outcome}
+          </span>
+        `;
+        historyEl.prepend(item);
+
+        countdown = 60;
+        predictionEl.textContent = "Waiting for your prediction...";
+        userPrediction = null;
+      }
+    };
+
+    const startLoop = () => {
+      periodEl.textContent = period;
+      countdown = 60;
+      predictionEl.textContent = "Waiting for your prediction...";
+      setInterval(updateTimer, 1000);
+    };
+
+    predictBigBtn.addEventListener("click", () => {
+      userPrediction = "Big";
+      predictionEl.textContent = "You predicted: Big";
+    });
+
+    predictSmallBtn.addEventListener("click", () => {
+      userPrediction = "Small";
+      predictionEl.textContent = "You predicted: Small";
+    });
+
+    startLoop();
+  </script>
+</body>
+</html>
